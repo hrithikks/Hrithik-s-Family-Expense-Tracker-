@@ -1,0 +1,14 @@
+{
+  "name": "family-expense-tracker",
+  "private": true,
+  "workspaces": ["frontend", "backend"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "test": "npm run test -w backend",
+    "db:generate": "prisma generate --schema=backend/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema=backend/prisma/schema.prisma",
+    "db:seed": "tsx backend/prisma/seed.ts"
+  },
+  "devDependencies": { "concurrently": "^9.1.2" }
+}

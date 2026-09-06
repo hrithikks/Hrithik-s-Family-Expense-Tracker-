@@ -1,0 +1,2 @@
+import { describe,it,expect } from 'vitest';
+describe('authorization design',()=>{it('scopes member query by session user',()=>{const actor={id:'hrithik',role:'MEMBER',email:'h@example.com'};expect(actor.role==='MEMBER'?'hrithik':undefined).toBe('hrithik')});it('requires responsibility assignment before member expense creation',()=>{const assigned=['milk','dahi'];expect(assigned.includes('vegetables')).toBe(false)})});

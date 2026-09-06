@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import { RoleName } from '@prisma/client';
+import { z } from 'zod';
+import { prisma } from '../prisma.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { AppError } from '../lib/errors.js';
+import { audit } from '../lib/audit.js';
+const router=Router(); const schema=z.object({name:z.string().min(2).max(100),description:z.string().max(500).optional().nullable(),isActive:z.boolean().optional()});
+const routeParam=(value:string|string[]|undefined)=>Array.isArray(value)?value[0]||'':value||'';
+router.get('/',requireAuth,async(req,res,next)=>{try{const where=req.user!.role===RoleName.ADMIN?{}:{isActive:true,assignments:{some:{userId:req.user!.id}}};res.json(await prisma.responsibility.findMany({where,include:{subItems:{where:{isActive:true}},assignments:{select:{userId:true}}},orderBy:{name:'asc'}}));}catch(e){next(e)}});
+router.post('/',requireAuth,requireRole(RoleName.ADMIN),validate(schema),async(req,res,next)=>{try{const entity=await prisma.responsibility.create({data:req.body});await audit(req.user!.id,'RESPONSIBILITY_CREATED','Responsibility',entity.id,{name:entity.name});res.status(201).json(entity)}catch(e){next(e)}});
+router.patch('/:id',requireAuth,requireRole(RoleName.ADMIN),validate(schema.partial()),async(req,res,next)=>{try{const entity=await prisma.responsibility.update({where:{id:routeParam(req.params.id)},data:req.body});await audit(req.user!.id,'RESPONSIBILITY_UPDATED','Responsibility',entity.id);res.json(entity)}catch(e){next(e)}});
+router.delete('/:id',requireAuth,requireRole(RoleName.ADMIN),async(req,res,next)=>{try{const id=routeParam(req.params.id);const count=await prisma.expense.count({where:{responsibilityId:id}});if(count) {const entity=await prisma.responsibility.update({where:{id},data:{isActive:false}});return res.json(entity)} await prisma.responsibility.delete({where:{id}});res.status(204).end()}catch(e){next(e)}});
+router.post('/:id/sub-items',requireAuth,requireRole(RoleName.ADMIN),validate(z.object({name:z.string().min(1).max(100)})),async(req,res,next)=>{try{res.status(201).json(await prisma.responsibilitySubItem.create({data:{responsibilityId:routeParam(req.params.id),name:req.body.name}}))}catch(e){next(e)}});
+router.patch('/:id/sub-items/:subItemId',requireAuth,requireRole(RoleName.ADMIN),validate(z.object({name:z.string().min(1).max(100).optional(),isActive:z.boolean().optional()})),async(req,res,next)=>{try{res.json(await prisma.responsibilitySubItem.update({where:{id:routeParam(req.params.subItemId),responsibilityId:routeParam(req.params.id)},data:req.body}))}catch(e){next(e)}});
+export default router;

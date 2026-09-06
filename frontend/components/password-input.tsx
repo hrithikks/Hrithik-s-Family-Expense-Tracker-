@@ -1,0 +1,4 @@
+'use client';
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+export function PasswordInput({ value, onChange, placeholder, required = false }: { value: string; onChange: (value: string) => void; placeholder: string; required?: boolean }) { const [visible, setVisible] = useState(false); return <div className="relative"><input className="field pr-11" type={visible ? 'text' : 'password'} placeholder={placeholder} value={value} onChange={event => onChange(event.target.value)} required={required}/><button type="button" onClick={() => setVisible(!visible)} aria-label={visible ? 'Hide password' : 'Show password'} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-2 text-[#567061] hover:bg-[#EEF2EA]">{visible ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div>; }

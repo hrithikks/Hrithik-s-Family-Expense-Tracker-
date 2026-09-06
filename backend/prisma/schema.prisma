@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum RoleName {
+  ADMIN
+  MEMBER
+}
+
+enum AuditAction {
+  USER_CREATED
+  USER_UPDATED
+  USER_DEACTIVATED
+  RESPONSIBILITY_CREATED
+  RESPONSIBILITY_UPDATED
+  RESPONSIBILITY_ASSIGNED
+  RESPONSIBILITY_UNASSIGNED
+  EXPENSE_CREATED
+  EXPENSE_UPDATED
+  EXPENSE_DELETED
+  PROFILE_UPDATED
+  PASSWORD_CHANGED
+}
+
+model Role {
+  id String @id @default(cuid())
+  name RoleName @unique
+  users User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model User {
+  id String @id @default(cuid())
+  firstName String
+  lastName String
+  email String @unique
+  passwordHash String
+  profileImageUrl String?
+  roleId String
+  role Role @relation(fields: [roleId], references: [id])
+  isActive Boolean @default(true)
+  lastLoginAt DateTime?
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  responsibilities UserResponsibility[]
+  expenses Expense[] @relation("ExpenseOwner")
+  createdExpenses Expense[] @relation("ExpenseCreator")
+  updatedExpenses Expense[] @relation("ExpenseUpdater")
+  auditLogs AuditLog[] @relation("AuditActor")
+}
+model Responsibility {
+  id String @id @default(cuid())
+  name String @unique
+  description String?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assignments UserResponsibility[]
+  subItems ResponsibilitySubItem[]
+  expenses Expense[]
+}
+model ResponsibilitySubItem {
+  id String @id @default(cuid())
+  responsibilityId String
+  responsibility Responsibility @relation(fields: [responsibilityId], references: [id], onDelete: Cascade)
+  name String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expenses Expense[]
+  @@unique([responsibilityId, name])
+}
+model UserResponsibility {
+  id String @id @default(cuid())
+  userId String
+  responsibilityId String
+  assignedAt DateTime @default(now())
+  assignedById String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responsibility Responsibility @relation(fields: [responsibilityId], references: [id], onDelete: Cascade)
+  @@unique([userId, responsibilityId])
+  @@index([responsibilityId])
+}
+model Expense {
+  id String @id @default(cuid())
+  userId String
+  responsibilityId String
+  subItemId String?
+  expenseDate DateTime @db.Date
+  amount Decimal @db.Decimal(12,2)
+  remark String?
+  createdById String
+  updatedById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation("ExpenseOwner", fields: [userId], references: [id])
+  responsibility Responsibility @relation(fields: [responsibilityId], references: [id])
+  subItem ResponsibilitySubItem? @relation(fields: [subItemId], references: [id])
+  createdBy User @relation("ExpenseCreator", fields: [createdById], references: [id])
+  updatedBy User? @relation("ExpenseUpdater", fields: [updatedById], references: [id])
+  @@index([userId, expenseDate])
+  @@index([responsibilityId, expenseDate])
+  @@index([expenseDate])
+}
+model AuditLog {
+  id String @id @default(cuid())
+  actorUserId String?
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  action AuditAction
+  entityType String
+  entityId String
+  details Json?
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}

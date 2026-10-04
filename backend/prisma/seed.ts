@@ -8,7 +8,7 @@ const groups = {
   Ravi: [{ name: 'Loans', subItems: ['Home Loan', 'Personal Loan'] }, { name: 'EMIs', subItems: ['EMI 1', 'EMI Phone', 'EMI Laptop'] }],
   Ravindra: ['Heavy Grocery', 'Bike Fuels and Maintenance', 'Medical Expenses', 'Gas Bill', 'Electricity Bill', 'LIC Mom', 'Lift Maintenance', 'Building Maintenance'],
   Riya: ['Vegetables', 'Fruits', 'Groceries', 'Puja Path', 'Sweets'],
-  Hrithik: ['Milk', 'Dahi', 'Chicken', 'Eggs', 'Paneer', 'Retail Shopping upto 0-50-100', 'Buy New Things']
+  Hrithik: ['Milk', 'PACKET MILK', 'Dahi', 'Chicken', 'Eggs', 'Paneer', 'Retail Shopping upto 0-50-100', 'Buy New Things']
 };
 async function main() {
   const [adminRole, memberRole] = await Promise.all([prisma.role.upsert({ where: { name: RoleName.ADMIN }, update: {}, create: { name: RoleName.ADMIN } }), prisma.role.upsert({ where: { name: RoleName.MEMBER }, update: {}, create: { name: RoleName.MEMBER } })]);
